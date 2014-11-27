@@ -1,0 +1,8 @@
+.autotest
+History.txt
+Manifest.txt
+README.txt
+Rakefile
+bin/smplsm
+lib/smplsm.rb
+test/test_smplsm.rb
