@@ -13,6 +13,10 @@ module Smplsm
       event :goodbye do
         transition :hello, to: :farewell
       end
+
+      event :hello_again do
+        transition :farewell, to: :hello
+      end
     end
 
     def setup
@@ -32,6 +36,12 @@ module Smplsm
       assert_equal :hello, item.state
       item.goodbye
       assert_equal :farewell, item.state
+    end
+
+    def test_an_invalid_transition
+      assert_raises StateMachine::TransitionError do
+        item.hello_again
+      end
     end
   end
 end

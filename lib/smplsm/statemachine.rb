@@ -1,5 +1,7 @@
 module Smplsm
   class StateMachine
+    class TransitionError < StandardError; end
+
     attr_reader :instance, :state_holder
     def initialize(instance, state_holder)
       @instance = instance
@@ -45,7 +47,7 @@ module Smplsm
           start_states = self.class.transitions[state]
           state if start_states.include?(current_state)
         end
-        raise "Invalid transition '#{name}' for '#{current_state}'" unless end_state
+        raise TransitionError, "Invalid transition '#{name}' for '#{current_state}'" unless end_state
         set_state(end_state)
       end
     end
