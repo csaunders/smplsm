@@ -17,15 +17,23 @@ module Smplsm
       end
 
       event :hello_again do
-        transition :farewell, to: :hello do |obj|
-          obj.info 'farewell -> hello'
-        end
+        transition :farewell, to: :hello
       end
     end
 
     def setup
       @item = Item.new
       @machine = AnSM.new(@item, :state)
+    end
+
+    def test_creating_a_statemachine_without_a_to_transition_raises_an_error
+      assert_raises StateMachine::StateDefinitionError do
+        cls = Class.new(StateMachine) do
+          event :a do
+            transition :hello
+          end
+        end
+      end
     end
 
     def test_getting_the_initial_state
@@ -48,6 +56,12 @@ module Smplsm
       assert_equal 'hello -> farewell', item.info
     end
 
+    def test_transitioning_does_not_raise_if_the_transition_block_is_nil
+      item.state = :farewell
+      item.hello_again
+      assert_equal :hello, item.state
+    end
+
     def test_an_invalid_transition
       assert_raises StateMachine::TransitionError do
         item.hello_again
@@ -57,7 +71,7 @@ module Smplsm
     def test_initializing_a_statemachine_with_an_object_that_already_has_a_state
       item = Item.new
       item.state = :farewell
-      machine = AnSM.new(item, :state)
+      AnSM.new(item, :state)
       assert_equal :farewell, item.state
     end
 
@@ -65,7 +79,7 @@ module Smplsm
       item = Item.new
       item.state = :noodle
       assert_raises StateMachine::InvalidStateError do
-        machine = AnSM.new(item, :state)
+        AnSM.new(item, :state)
       end
     end
   end

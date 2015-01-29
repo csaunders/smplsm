@@ -1,15 +1,8 @@
 module Smplsm
   class StateMachine
+    class StateDefinitionError < StandardError; end
     class TransitionError < StandardError; end
     class InvalidStateError < StandardError; end
-
-    class Destination
-      attr_reader :name, :proc
-      def initialize(name, proc)
-        @name = name
-        @proc = proc
-      end
-    end
 
     attr_reader :instance, :state_holder
     def initialize(instance, state_holder)
@@ -35,7 +28,8 @@ module Smplsm
       end
 
       define_method :set_state do |new_state|
-        instance.public_send("#{state_holder}=", new_state)
+        instance.public_send("#{state_holder}=", new_state.name)
+        new_state.proc.call(instance) if new_state.proc
       end
     end
 
@@ -49,12 +43,11 @@ module Smplsm
 
     def self.event(name)
       raise "Invalid event, block required" unless block_given?
-      dest, blk = yield
       events[name] ||= []
-      events[name] << dest
+      events[name] << yield
       define_method name do
         end_state = self.class.events[name].find do |state|
-          start_states = self.class.transitions[state]
+          start_states = self.class.transitions[state.name]
           state if start_states.include?(current_state)
         end
         raise TransitionError, "Invalid transition '#{name}' for '#{current_state}'" unless end_state
@@ -63,9 +56,10 @@ module Smplsm
     end
 
     def self.transition(from, to: nil, &blk)
+      raise StateDefinitionError if to.nil?
       transitions[to] ||= []
       transitions[to] << from
-      to
+      TransitionDestination.new(to, blk)
     end
 
     private
@@ -88,6 +82,14 @@ module Smplsm
     def verify_state!
       unless self.class.transitions.keys.include? current_state
         raise InvalidStateError
+      end
+    end
+
+    class TransitionDestination
+      attr_reader :name, :proc
+      def initialize(name, proc)
+        @name = name
+        @proc = proc
       end
     end
   end
