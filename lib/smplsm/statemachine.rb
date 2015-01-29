@@ -1,6 +1,15 @@
 module Smplsm
   class StateMachine
     class TransitionError < StandardError; end
+    class InvalidStateError < StandardError; end
+
+    class Destination
+      attr_reader :name, :proc
+      def initialize(name, proc)
+        @name = name
+        @proc = proc
+      end
+    end
 
     attr_reader :instance, :state_holder
     def initialize(instance, state_holder)
@@ -8,6 +17,7 @@ module Smplsm
       @state_holder = state_holder
       set_default
       setup_delegates
+      verify_state!
     end
 
     def self.default(state)
@@ -39,7 +49,7 @@ module Smplsm
 
     def self.event(name)
       raise "Invalid event, block required" unless block_given?
-      dest = yield
+      dest, blk = yield
       events[name] ||= []
       events[name] << dest
       define_method name do
@@ -52,7 +62,7 @@ module Smplsm
       end
     end
 
-    def self.transition(from, to: nil)
+    def self.transition(from, to: nil, &blk)
       transitions[to] ||= []
       transitions[to] << from
       to
@@ -73,6 +83,12 @@ module Smplsm
       DEFN
       eval code
       instance.delegate = self
+    end
+
+    def verify_state!
+      unless self.class.transitions.keys.include? current_state
+        raise InvalidStateError
+      end
     end
   end
 end
