@@ -27,6 +27,27 @@ module Smplsm
       assert_equal state_machine, stateful_class.sm_for(:state)
     end
 
+    def test_using_state_on_with_nil_raises_an_error
+      assert_raises Stateful::InvalidStateMachineError do
+        Class.new do
+          attr_reader :state
+          include Stateful
+          state_on :state
+        end
+      end
+    end
+
+    def test_using_state_on_the_same_field_raises_an_error
+      assert_raises Stateful::StateRedefinitionError do
+        Class.new do
+          attr_reader :state
+          include Stateful
+          state_on :state, using: Class.new
+          state_on :state, using: Class.new
+        end
+      end
+    end
+
     def test_initializing_a_stateful_object_initializes_the_machines_and_sets_the_default
       obj = StatefulObject.new
       assert_equal :hello, obj.state
