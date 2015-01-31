@@ -68,6 +68,12 @@ module Smplsm
       end
     end
 
+    def test_initializing_a_statemachine_with_an_object_whose_state_is_blank
+      item = Item.new
+      AnSM.new(item, :state)
+      assert_equal :hello, item.state
+    end
+
     def test_initializing_a_statemachine_with_an_object_that_already_has_a_state
       item = Item.new
       item.state = :farewell

@@ -80,6 +80,7 @@ module Smplsm
     end
 
     def verify_state!
+      return if current_state == default_state
       unless self.class.transitions.keys.include? current_state
         raise InvalidStateError
       end
